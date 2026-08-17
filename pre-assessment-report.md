@@ -1,203 +1,173 @@
----
-License: Copyright © 2026 Durham University, SHAREing Project, MIT Licensed
-Creator: Andrew Naden
-Contributors: Andrew Naden; Ananya Gangopadhyay
-Summary: Pre-assessment report template document
----
-
-# Pre-assessment template
-
-> [!NOTE]
->
-> 1. Guidance throughout this template is provided using information boxes, along with example text and placeholders. The example text is not meant to be a complete comment, but a suggestion to get you started. Please remove the information boxes and replace the example text in your report.
->
-> 2. The template is based on Chapter 4 of the [performance assessment guidebook](https://shareing-dri.github.io/performance-assessment/guidebook). However, the guidebook should not be necessary to perform the pre-assessment using this template.
->
-> 3. This template is not exhaustive, but should provide the framework for completing a pre-assessment using the information submitted via the [assessment submission form](https://forms.office.com/Pages/ResponsePage.aspx?id=i9hQcmhLKUW-RNWaLYpvlIUXnqx3D81Bt-KemxGOyY5UOU9RQkFSOE5UU1Y1QVZNS0QyNlFYNjRNOS4u), by the submitter.
+# Pre-assessment: AI HPC Helpdesk (RAG Chatbot)
 
 ## Assessment objective
 
->[!IMPORTANT]
-> Is this a test submission, internal review or external review? If it is part of a larger project or funding, add that information here. You may also include your (the assessor's) name, optionally with contact details.
-
-A test submission of `<repository/website>`, version `<version_number>` using the `<benchmark_name>` benchmark. This assessment is performed by `<assessor_name>` of `<assessor_affiliation>` on `<assessment_date>`.
+An internal review of the `DRI-helpdesk-Replication-Guide` RAG helpdesk
+(https://github.com/Fawada/DRI-helpdesk-Replication-Guide), tag
+`assessment-2026-08-v1`, using the `hpc-helpdesk-standard-benchmark` (15
+representative helpdesk queries). Assessment performed by Fawada Qaiser,
+DiRAC / Durham University, on 2026-08-17.
 
 ## Disclaimers
 
-1. This report is not a commentary on code quality, but an indicator of the quality of the current SHAREing testing methodology as of `<guidance_date>`.
-2. The pre-assessment is only a preliminary assessment of submission suitability and does not guarantee a full assessment. It will be provided to the submitter indicating if the full assessment will be undertaken or detail reasons for rejection.
+1. This report is not a commentary on code quality, but an indicator of the
+   quality of the current SHAREing testing methodology as of 2026-08.
+2. The pre-assessment is only a preliminary assessment of submission
+   suitability and does not guarantee a full assessment.
 
 ## Table of contents
 
->[!TIP]
-> Place `x` inside the box when complete to mark the checkbox.
-
-- [ ] [1: Benchmark setup](#1-benchmark-setup)
-- [ ] [2: Description of working environment](#2-description-of-working-environment)
-- [ ] [3: Compiler setup and optimisations](#3-compiler-setup-and-optimisations)
-- [ ] [4: Computational complexity and scaling](#4-computational-complexity-and-scaling)
-- [ ] [5: Memory, storage and I/O](#5-memory-storage-and-io)
-- [ ] [6: Additional comments from submitter](#6-additional-comments-from-submitter)
-- [ ] [7: Pre-assessment outcome](#7-pre-assessment-outcome)
+- [x] 1: Benchmark setup
+- [x] 2: Description of working environment
+- [x] 3: Compiler setup and optimisations
+- [x] 4: Computational complexity and scaling
+- [x] 5: Memory, storage and I/O
+- [x] 6: Additional comments from submitter
+- [x] 7: Pre-assessment outcome
 
 ## 1: Benchmark setup
 
->[!IMPORTANT]
-> This section should be composed of information provided by the submitter.
-
 ### Fetch and build program
 
->[!IMPORTANT]
-> Provide commands to fetch and build the program. Include version numbers where possible.
-
-The submitter has requested an assessment of `<repository/program_name>`, version `<version_number`>/branch `<branch_name>`. It can be fetched/installed as follows:
+The code is a self-hosted retrieval-augmented-generation (RAG) helpdesk. A
+worker on the GPU node retrieves relevant documentation chunks (LlamaIndex
+hybrid BM25 + dense retrieval) and generates answers with a local LLM
+(llama3.1:8b via Ollama). Clients and worker communicate through a
+shared-filesystem queue; no external API is used.
 
 ```bash
-# Example 1: Install specific version with a package manager
-spack install <program_name>@<version_number>
+git clone https://github.com/Fawada/DRI-helpdesk-Replication-Guide.git
+cd DRI-helpdesk-Replication-Guide
+python3 -m venv ~/hpc-helpdesk-env
+source ~/hpc-helpdesk-env/bin/activate
+pip install llama-index llama-index-llms-ollama llama-index-embeddings-ollama \
+            llama-index-retrievers-bm25 python-docx psutil
+```
 
-# Example 2: Clone a specific branch of a repository
-git clone -p <branch_name> <repository> && make release
+Models are served locally via Ollama on the GPU node:
+
+```bash
+ollama pull llama3.1:8b       # generation
+ollama pull nomic-embed-text  # embeddings
 ```
 
 ### Fetch and run benchmark
 
->[!IMPORTANT]
-> Provide commands to fetch the benchmark. If it is directly provided by the submitter, note that here and provide as an attachment if permitted.
-
-The benchmark can be obtained from:
-
-```bash
-git clone <benchmark_repository>
-```
-
->[!IMPORTANT]
-> Provide instructions on how to run the benchmark and indicate the expected I/O.
-
-To run the benchmark:
+The benchmark is included with the code under `benchmark/`. It submits each
+query as a JSON file to the shared queue and waits for the corresponding
+response file.
 
 ```bash
-cd <benchmark_folder>
-mpirun -np 24 <program_executable> <benchmark_name> <output_file>
+cd DRI-helpdesk-Replication-Guide
+source install/config.sh      # sets HELPDESK_ROOT and queue paths (shared FS)
+bash worker/start-worker.sh   # start worker on GPU node (once)
+python benchmark/run_benchmark.py
 ```
 
-The following output is expected every `<n>` iterations:
-
-```txt
-<example-output>
-```
+Expected output: one `[SUBMITTED]` / `Completed in <t> seconds` line per query,
+then a summary (total duration, per-query results saved to
+`results/benchmark_report.json`). No file output beyond the JSON report and the
+queue traffic.
 
 ### Reference architecture
 
->[!IMPORTANT]
-> Add details of the reference architecture as provided by the submitter. Add any relevant details you may find regarding the architecture/system online. If the same system is accessible to you for the assessment, then indicate that here and detail the information in the [next section](#hardware-information).
+The reference and assessment system are the same: COSMA8 (Durham University),
+GPU node ga008. No cross-architecture comparison is in scope for this review.
 
 ## 2: Description of working environment
 
 ### Hardware information
 
->[!IMPORTANT]
-> Add the hardware information used, including where applicable the queue information if necessary. Comment on expected normal limit for the hardware, e.g. size of the largest interconnected set of nodes, or memory limitations. Compare with the reference architecture (if different), indicating any issues you may expect to see due to the differences.
+### Hardware information
 
-The `<cluster_name>` system based at `<university/organisation>` was used for this assessment.
+The COSMA8 system at Durham University was used for this assessment. The worker
+runs on GPU node ga008. Hardware was confirmed directly on the compute node via
+`cat /proc/cpuinfo`, `lscpu`, and `free -h` (rather than assumed), following the
+workbook's guidance to read specifications from the compute node itself and never
+from a login node.
 
->[!IMPORTANT]
-> Provide processor, memory and cache information as well as interconnect information (e.g. Infiniband, NVlink - if across multiple nodes) of the system the assessment is to be performed on.
+| Specification        | Per node (ga008)                                  |
+| -------------------- | ------------------------------------------------- |
+| Accelerator (APU)    | AMD Instinct MI300A                               |
+| Architecture         | Integrated CPU+GPU (APU) with unified memory      |
+| CPU(s)               | 192 (2 threads/core)                              |
+| Sockets              | 4                                                 |
+| NUMA nodes           | 4                                                 |
+| Total memory         | 501 GiB (unified CPU/GPU pool)                    |
+| LLM                  | llama3.1:8b (Ollama, local)                       |
+| Embeddings           | nomic-embed-text                                  |
 
-The hardware details for `<cluster_name>` are `[available at](<URL>)`. This information is corroborated by running `cat /proc/cpuinfo` on one of the compute nodes via an interactive session. There are `<num_nodes>` compute nodes on the system:
+NUMA layout (from `lscpu`):
+NUMA node0 CPU(s):                       0-23,96-119
+NUMA node1 CPU(s):                       24-47,120-143
+NUMA node2 CPU(s):                       48-71,144-167
+NUMA node3 CPU(s):                       72-95,168-191.
 
->[!IMPORTANT]
-> The table below is an example and should be adapted for "non-standard" architectures, e.g. systems with Grace Hopper nodes. A placeholder for hardware accelerators is provided. For most assessment projects, these are likely to be GPUs (generally Nvidia or AMD). But some cases may also work with FPGAs, ASICs etc. Include any relevant specifications.
-
-| Specification             | Per node                                                                     |
-| ------------------------- | ---------------------------------------------------------------------------- |
-| Processors                | `<num_procs>` $\times$ `[<processor_name>](<link-to-online-details>)`        |
-| `<Hardware accelerators>` | `<num_gpus/fpgas>` $\times$ `[<accelerator_name>](<link-to-online-details>)` |
-| Clock speed per CPU       | `<freq>`MHz                                                                  |
-| Sockets                   | `<num_sockets>`                                                              |
-| Cores                     | `<num_cores>`                                                                |
-| RAM                       | `<memory_size>`GB `<memory_type>`                                            |
-| Local storage             | `<storage_size>`GB `<storage_type>`                                          |
-
->[!TIP]
-> Add details that you can obtain from the system or online information about sockets, NUMA regions, interconnects and cache sizes.
-
-### Libraries and modules
-
->[!IMPORTANT]
-> Provide information on the libraries that need to be installed or modules that must be loaded based on the compilation information provided by the submitter.
+Note: the MI300A is an APU, so CPU and GPU share a single unified 501 GiB memory
+pool rather than the GPU having separate dedicated VRAM. Login nodes on COSMA8
+(e.g. login7a, Intel Xeon Gold 5120) differ from the MI300A compute nodes, so
+login-node specifications are not representative of the assessment hardware.00
 
 ### Assessment tools
 
-> [!IMPORTANT]
->
-> 1. Limit pre-assessment tools to those with very low runtime. Mostly just focus on whether the program is running as expected. Do not assess the results of the benchmark for correctness as that requires domain-specific knowledge.
-> 2. High level assessment tools and techniques which are expected to be useful, like global measures such as wall time.
-> 3. If additional information is provided, you can address the low-level assessment that may be required, and if you may require privileges on the system. Only address this section if you confident that enough domain information has been provided, with respect to scaling of the compute and memory with the problem size.
-
 1. Pre-assessment:
-   - `<tool_1>`
-   - `<tool_2>`
-
+   - Wall-clock timing (benchmark harness)
+   - psutil (client memory footprint)
 2. High-level assessment:
-   - `<tool_1>`
-   - `<tool_2>`
-
+   - End-to-end response latency (per-query wall time)
+   - I/O proportion (candidate; queue + index reads)
+   - GPU utilisation (candidate; nvidia-smi / nsight on the worker)
 3. Low-level assessment:
-   - `<tool_1>`
-   - `<tool_2>`
+   - To be determined if the high-level stage flags a specific rubric.
 
 ## 3: Compiler setup and optimisations
 
->[!IMPORTANT]
-> Based on the compilation information provided by submitter, comment on the following (where applicable):
->
-> - package manager (e.g. `spack`)
-> - build toolchain (e.g. `cmake`)
-> - main compiler version (e.g. GCC 11)
-> - compiler optimisations (e.g. -O3, `--fast-math`)
-> - additional accelerator libraries and versions (e.g. SYCL revision 11, Kokkos 5.1)
-> - any feature sets which are toggled on (e.g. vectorisation)
->
-> Add additional information about the impact of optimisations on convergence or correctness of results if provided by the submitter.  If there are any issues with compatibility on the machine you are testing on, or any build issues experienced, provide details
-
-Build instructions from the user `<build_toolchain>` to build the `<program_name>` with `<optimisation_level>`.
-
->[!tip]
-> MAQAO should present missed compiler optimisation opportunities. Increasing the optimisation level may require re-converging the system to confirm accuracy. This may be outside the scope of the assessment.
+Not applicable in the conventional sense. This is an interpreted Python
+application; there is no user compilation step. The performance-critical work is
+LLM inference executed by Ollama (a precompiled runtime) on the GPU. No compiler
+flags, vectorisation toggles, or accelerator build options are exposed by the
+submitted code.
 
 ## 4: Computational complexity and scaling
 
->[!IMPORTANT]
-> Comment on the possibility of scaling the problem up and down, both in strong (changing number of work units e.g. CPUs, but keeping the problem size constant) and weak (changing the problem size but keeping number of work units the same) contexts. Add any information provided by the submitter regarding the scaling of _computation (i.e. work)_, _memory_ and _execution time_ as the problem size or work units are increased.
->
-> If there is existing scaling information (graphs or raw data) available, attach it to this report or add links to access it.
+The workload does not scale in the classic strong/weak sense (no MPI, no
+multi-node, no thread-count sweep). The natural scaling dimensions are:
 
-The `<parameter>` value can be varied to increase the problem size for scaling tests.
+- Corpus size (number of indexed document chunks), affecting retrieval.
+- Concurrency (number of simultaneous users/requests on the queue), affecting
+  throughput.
+
+For this review the corpus is fixed and queries are submitted sequentially, so a
+single fixed problem setup is used. Strong/weak scaling studies from the workbook
+are noted as not applicable and excluded with justification in the high-level
+report.
 
 ## 5: Memory, storage and I/O
 
->[!IMPORTANT]
-> Comment on the expected in memory size of the program at runtime, including data. An estimate of this information should be provided as part of the submission. For jobs submitted to Hamilton as part of early assessment, the Hamilton dashboard can be used to gauge memory usage (see [Hamilton Portal Performance](https://www.durham.ac.uk/research/institutes-and-centres/advanced-research-computing/hamilton-supercomputer/usage/portal/performance/)).
+Client-side memory footprint is ~14 MB (benchmark harness only). The worker's
+model (llama3.1:8b) occupies roughly 6 GB, drawn from the node's unified 501 GiB
+memory pool shared between CPU and GPU (MI300A APU), not a separate VRAM bank.
 
-According to the submitter, the expected memory required for the benchmark is `<memory_size>`GB.
+Storage: the benchmark writes small JSON request/response files to the
+shared-filesystem queue and a single `benchmark_report.json`. No large temporary
+or checkpoint files.
 
->[!IMPORTANT]
-> Comment on the expected storage requirements of the program, are there large amounts of temporary files (either in quantity or in total size)? An estimate of this information should be provided as part of the submission. A program that produces a large amount of temporary checkpoint files should have checkpoints turned off where possible.
-
-The benchmark also outputs files totalling `<storage_size>`MB.
-
->[!IMPORTANT]
-> Comment on the expected output, including when the I/O is performed, and your observations when running the benchmark. This output should be minimal when testing the working performance of the program rather than the I/O saturation. Excessive I/O will result in an inaccurate performance assessment and may result in rejection.
-
-The benchmark writes to the console output every `<n>` iterations [as indicated by the submitter](#fetch-and-run-benchmark).
+I/O: the architecture is intrinsically filesystem-queue based (requests,
+responses, token streams, and index reads). This makes I/O proportion a
+genuinely relevant high-level rubric for this code, unlike most others. Console
+output is minimal.
 
 ## 6: Additional comments from submitter
 
->[!IMPORTANT]
-> Include any additional information from the submitter that does not fit the previous sections.
+The submitter and assessor are the same person for this internal review. The
+code is a production deployment on COSMA and has been replicated at Keele
+(GreenHPC), so the benchmark reflects real usage.
 
 ## 7: Pre-assessment outcome
 
->[!IMPORTANT]
-> Indicate whether the assessment will proceed to the high-level stage. If the assessment is rejected here, comment on why and how to proceed.
+The code builds, runs, and completes the benchmark without user interaction
+(~48 s for 15 queries, well within the <10 min guideline). It meets the
+pre-assessment criteria and **proceeds to the high-level assessment**. Note that
+several standard rubrics (core FLOPS, intra-node, inter-node) do not map onto a
+single-GPU RAG service; the high-level report justifies which rubrics apply.
+00
