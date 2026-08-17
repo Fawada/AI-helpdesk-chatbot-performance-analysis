@@ -1,0 +1,81 @@
+{
+  "workload_name": "hpc-helpdesk-standard-benchmark",
+  "version": "1.0",
+  "queries": [
+    {
+      "id": "q01",
+      "category": "Basic Access",
+      "query": "How do I log in to the cluster using SSH?"
+    },
+    {
+      "id": "q02",
+      "category": "Basic Access",
+      "query": "How do I change my account password or SSH keys?"
+    },
+    {
+      "id": "q03",
+      "category": "Basic Access",
+      "query": "What storage areas are available and what are their quotas?"
+    },
+    {
+      "id": "q04",
+      "category": "Job Scheduling",
+      "query": "How do I submit a basic batch job using SLURM?"
+    },
+    {
+      "id": "q05",
+      "category": "Job Scheduling",
+      "query": "How do I request a specific GPU partition or multiple GPUs for my job?"
+    },
+    {
+      "id": "q06",
+      "category": "Job Scheduling",
+      "query": "How do I write an interactive job request using salloc?"
+    },
+    {
+      "id": "q07",
+      "category": "Job Scheduling",
+      "query": "How do I check the status or cancel a running batch job?"
+    },
+    {
+      "id": "q08",
+      "category": "Software & Modules",
+      "query": "How do I list and load pre-installed software modules?"
+    },
+    {
+      "id": "q09",
+      "category": "Software & Modules",
+      "query": "How do I install a custom Python virtual environment with specific packages?"
+    },
+    {
+      "id": "q10",
+      "category": "Software & Modules",
+      "query": "How do I load CUDA and compile a C++ or CUDA application?"
+    },
+    {
+      "id": "q11",
+      "category": "Debugging & Performance",
+      "query": "How do I debug an MPI deadlock or communication timeout?"
+    },
+    {
+      "id": "q12",
+      "category": "Debugging & Performance",
+      "query": "How do I check my job's GPU memory usage and compute utilization?"
+    },
+    {
+      "id": "q13",
+      "category": "Debugging & Performance",
+      "query": "What causes out-of-memory (OOM) errors and how can I prevent them?"
+    },
+    {
+      "id": "q14",
+      "category": "Data & Transfers",
+      "query": "How do I transfer large datasets between my local machine and the cluster using SCP or rsync?"
+    },
+    {
+      "id": "q15",
+      "category": "Data & Transfers",
+      "query": "What are the guidelines for backing up data from scratch storage?"
+    }
+  ]
+}
