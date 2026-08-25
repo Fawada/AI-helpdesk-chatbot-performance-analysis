@@ -84,6 +84,7 @@ effect. A warm-up query preceded the sweep to exclude cold-start.
 | 5  | 9.72  | 2.41 | 6.31 | 9.71  | 30.9 | 0 |
 | 10 | 17.33 | 2.41 | 9.66 | 17.33 | 34.6 | 0 |
 
+<img src='images/concurrency.png' width=600 />
 **Findings:**
 - **Throughput is constant at ~31 requests/minute** regardless of concurrency —
   the service capacity of the single-worker design. Concurrent load does not
