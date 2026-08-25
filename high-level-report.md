@@ -63,6 +63,7 @@ rubrics do not apply; the meaningful characterisation is end-to-end latency.
 | IO               | Not quantified | I/O does not appear to dominate |
 | Intra-node (80%) | N/A | No core-scaling parallelism |
 | Inter-node (80%) | N/A | Single-node service |
+| Concurrency | ~31 req/min | Service ceiling; latency scales linearly with load |
 ## Concurrency / Throughput (service scaling study)
 
 Traditional intra/inter-node scaling does not apply to this code, but the
