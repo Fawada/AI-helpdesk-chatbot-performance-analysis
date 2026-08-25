@@ -1,0 +1,53 @@
+{
+  "test_query": "How do I submit a basic batch job using SLURM?",
+  "concurrency_levels": [
+    1,
+    2,
+    5,
+    10
+  ],
+  "poll_interval_s": 0.1,
+  "timeout_s": 120,
+  "results": [
+    {
+      "concurrency": 1,
+      "batch_wall_s": 1.9050538539886475,
+      "successes": 1,
+      "failures": 0,
+      "latency_min_s": 1.9044437408447266,
+      "latency_median_s": 1.9044437408447266,
+      "latency_max_s": 1.9044437408447266,
+      "throughput_req_per_min": 31.495172629569954
+    },
+    {
+      "concurrency": 2,
+      "batch_wall_s": 3.9080810546875,
+      "successes": 2,
+      "failures": 0,
+      "latency_min_s": 2.1046676635742188,
+      "latency_median_s": 3.0059969425201416,
+      "latency_max_s": 3.9073262214660645,
+      "throughput_req_per_min": 30.70560674683742
+    },
+    {
+      "concurrency": 5,
+      "batch_wall_s": 9.71649980545044,
+      "successes": 5,
+      "failures": 0,
+      "latency_min_s": 2.4058337211608887,
+      "latency_median_s": 6.310563564300537,
+      "latency_max_s": 9.714212656021118,
+      "throughput_req_per_min": 30.875315803713185
+    },
+    {
+      "concurrency": 10,
+      "batch_wall_s": 17.330658435821533,
+      "successes": 10,
+      "failures": 0,
+      "latency_min_s": 2.407055377960205,
+      "latency_median_s": 9.664682865142822,
+      "latency_max_s": 17.325663566589355,
+      "throughput_req_per_min": 34.62072732100198
+    }
+  ]
+}

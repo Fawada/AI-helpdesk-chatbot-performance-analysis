@@ -63,3 +63,43 @@ rubrics do not apply; the meaningful characterisation is end-to-end latency.
 | IO               | Not quantified | I/O does not appear to dominate |
 | Intra-node (80%) | N/A | No core-scaling parallelism |
 | Inter-node (80%) | N/A | Single-node service |
+## Concurrency / Throughput (service scaling study)
+
+Traditional intra/inter-node scaling does not apply to this code, but the
+operationally meaningful question for a helpdesk *service* is how it behaves
+under simultaneous users. The worker processes requests serially (FIFO, one at
+a time — confirmed in `worker.py`: `claim_oldest()` claims a single oldest
+request per poll cycle, no request-level threading). We therefore measured
+per-request latency and throughput as concurrent load increases.
+
+N requests were submitted simultaneously (via threads) at each concurrency
+level, repeating a single representative query
+("How do I submit a basic batch job using SLURM?") to isolate the queuing
+effect. A warm-up query preceded the sweep to exclude cold-start.
+
+| Concurrency (N) | Batch wall (s) | Min (s) | Median (s) | Max (s) | Throughput (req/min) | Failures |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1  | 1.91  | 1.90 | 1.90 | 1.90  | 31.5 | 0 |
+| 2  | 3.91  | 2.10 | 3.01 | 3.91  | 30.7 | 0 |
+| 5  | 9.72  | 2.41 | 6.31 | 9.71  | 30.9 | 0 |
+| 10 | 17.33 | 2.41 | 9.66 | 17.33 | 34.6 | 0 |
+
+**Findings:**
+- **Throughput is constant at ~31 requests/minute** regardless of concurrency —
+  the service capacity of the single-worker design. Concurrent load does not
+  increase throughput.
+- **Per-request latency grows linearly with queue depth.** The last of 10
+  simultaneous requests waits ~17s, sitting behind 9 others (batch wall ≈ N ×
+  service time confirms strict serialisation).
+- **Zero failures** at all levels: the queue absorbs backlog gracefully;
+  requests wait rather than drop.
+
+**Implication:** the current single-worker design is well-behaved but caps
+service capacity at ~31 req/min. If concurrent demand routinely exceeds this,
+the natural mitigation is multiple workers consuming the same queue — the
+architecture (atomic claim via rename) already supports this without
+modification.
+
+Note: single-request latency here (~1.9s) is lower than the sequential
+benchmark's ~3s, due to finer polling (0.1s vs 1s) and a fully warm model;
+the two figures should not be directly compared.
