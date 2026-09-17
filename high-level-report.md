@@ -14,7 +14,30 @@ Summary: High-level assessment report - RAG HPC help desk
 * Compiler: N/A (interpreted Python; inference via precompiled Ollama runtime)
 * Compiler flags: N/A
 * Problem spec: 15-query characteristic benchmark (`hpc-helpdesk-standard-benchmark`), submitted sequentially over a shared-filesystem queue
+## MI300A / Ollama Configuration
 
+Documenting the exact configuration is important for reproducibility and follows
+AMD's recommended pattern for reporting MI300 inference results (by model,
+precision, and context).
+
+| Parameter | Value |
+| --- | --- |
+| Accelerator | AMD Instinct MI300A APU (gfx942); 4 present on node |
+| GPUs used for inference | 1 of 4 (model on MainGPU:0; other 3 idle) |
+| ROCm version | 7.14 (module `hipcc/7.14-rocm-el9`) |
+| Ollama version | 0.21.2 |
+| Generation model | llama3.1:8b (8.0B params, architecture: llama) |
+| Quantisation | Q4_K_M |
+| Context window | 131072 (128K); KV cache sized to match on GPU |
+| GPU layers offloaded | 33/33 (fully offloaded) |
+| Batch size | 512 |
+| Flash attention | Enabled (auto) |
+| Parallelism | OLLAMA_NUM_PARALLEL=1 (single-stream) |
+| Embedding model | nomic-embed-text (embedding length 4096) |
+| Ingest-only model | llama3.2:3b (used for index build, not serving) |
+| Retrieval | LlamaIndex hybrid BM25 + dense, FINAL_TOP_K=12 |
+| Temperature | 0.1 (near-deterministic) |
+| Sampling stops | `<|start_header_id|>`, `<|end_header_id|>`, `<|eot_id|>` |
 ## CPU Analysis
 Not applicable. This code performs no user-level floating-point compute on the CPU; its work is document retrieval plus LLM inference dispatched to the AMD MI300A. A scalar-peak FLOPS comparison would not characterise the workload. No CPU score is assigned.
 
