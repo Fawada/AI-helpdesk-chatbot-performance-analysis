@@ -1,0 +1,151 @@
+{
+  "model": "llama3.1:8b",
+  "prompts": [
+    "Explain how to submit a SLURM batch job, in about four sentences.",
+    "Describe how to request a GPU partition on an HPC cluster, in detail.",
+    "Explain how to load software modules and set up a Python environment.",
+    "Describe common causes of out-of-memory errors on HPC jobs and how to avoid them.",
+    "Explain how to transfer large datasets to a cluster using rsync, with examples."
+  ],
+  "repeats": 3,
+  "gen_rate_median_tok_s": 226.78314289686415,
+  "gen_rate_mean_tok_s": 211.54879420553274,
+  "prefill_rate_median_tok_s": 4469.222271097178,
+  "records": [
+    {
+      "prompt": "Explain how to submit a SLURM batch job, in about four sentences.",
+      "repeat": 0,
+      "tokens_generated": 96,
+      "gen_tokens_per_s": 234.28417598697115,
+      "prefill_tokens_per_s": 509.80681380597633,
+      "load_duration_s": 0.272044508,
+      "total_duration_s": 0.80247689
+    },
+    {
+      "prompt": "Explain how to submit a SLURM batch job, in about four sentences.",
+      "repeat": 1,
+      "tokens_generated": 129,
+      "gen_tokens_per_s": 230.8579318380288,
+      "prefill_tokens_per_s": 5934.882469544162,
+      "load_duration_s": 0.31519755,
+      "total_duration_s": 0.968901066
+    },
+    {
+      "prompt": "Explain how to submit a SLURM batch job, in about four sentences.",
+      "repeat": 2,
+      "tokens_generated": 116,
+      "gen_tokens_per_s": 234.74256689280847,
+      "prefill_tokens_per_s": 5775.838427123679,
+      "load_duration_s": 0.29992866,
+      "total_duration_s": 0.870726547
+    },
+    {
+      "prompt": "Describe how to request a GPU partition on an HPC cluster, in detail.",
+      "repeat": 0,
+      "tokens_generated": 670,
+      "gen_tokens_per_s": 203.82191430159463,
+      "prefill_tokens_per_s": 1629.6051623384458,
+      "load_duration_s": 0.292660429,
+      "total_duration_s": 3.990357084
+    },
+    {
+      "prompt": "Describe how to request a GPU partition on an HPC cluster, in detail.",
+      "repeat": 1,
+      "tokens_generated": 829,
+      "gen_tokens_per_s": 154.10487403724684,
+      "prefill_tokens_per_s": 4541.86075842786,
+      "load_duration_s": 0.268348932,
+      "total_duration_s": 6.206114272
+    },
+    {
+      "prompt": "Describe how to request a GPU partition on an HPC cluster, in detail.",
+      "repeat": 2,
+      "tokens_generated": 714,
+      "gen_tokens_per_s": 158.45484855621592,
+      "prefill_tokens_per_s": 4469.222271097178,
+      "load_duration_s": 0.283036815,
+      "total_duration_s": 5.45061548
+    },
+    {
+      "prompt": "Explain how to load software modules and set up a Python environment.",
+      "repeat": 0,
+      "tokens_generated": 688,
+      "gen_tokens_per_s": 191.05844070396753,
+      "prefill_tokens_per_s": 1454.0747749470913,
+      "load_duration_s": 0.278910685,
+      "total_duration_s": 4.278885523
+    },
+    {
+      "prompt": "Explain how to load software modules and set up a Python environment.",
+      "repeat": 1,
+      "tokens_generated": 605,
+      "gen_tokens_per_s": 221.7882835271456,
+      "prefill_tokens_per_s": 3402.3350508982235,
+      "load_duration_s": 0.279972775,
+      "total_duration_s": 3.467269134
+    },
+    {
+      "prompt": "Explain how to load software modules and set up a Python environment.",
+      "repeat": 2,
+      "tokens_generated": 733,
+      "gen_tokens_per_s": 201.66770553506208,
+      "prefill_tokens_per_s": 4437.433299830712,
+      "load_duration_s": 0.267778316,
+      "total_duration_s": 4.437290925
+    },
+    {
+      "prompt": "Describe common causes of out-of-memory errors on HPC jobs and how to avoid them.",
+      "repeat": 0,
+      "tokens_generated": 621,
+      "gen_tokens_per_s": 197.64436006758112,
+      "prefill_tokens_per_s": 1614.607306167258,
+      "load_duration_s": 0.269150117,
+      "total_duration_s": 3.775380169
+    },
+    {
+      "prompt": "Describe common causes of out-of-memory errors on HPC jobs and how to avoid them.",
+      "repeat": 1,
+      "tokens_generated": 555,
+      "gen_tokens_per_s": 231.1716269428542,
+      "prefill_tokens_per_s": 5288.056490041173,
+      "load_duration_s": 0.311097475,
+      "total_duration_s": 3.065109523
+    },
+    {
+      "prompt": "Describe common causes of out-of-memory errors on HPC jobs and how to avoid them.",
+      "repeat": 2,
+      "tokens_generated": 667,
+      "gen_tokens_per_s": 226.78314289686415,
+      "prefill_tokens_per_s": 5899.102177716773,
+      "load_duration_s": 0.279992963,
+      "total_duration_s": 3.608197734
+    },
+    {
+      "prompt": "Explain how to transfer large datasets to a cluster using rsync, with examples.",
+      "repeat": 0,
+      "tokens_generated": 855,
+      "gen_tokens_per_s": 228.11414046876413,
+      "prefill_tokens_per_s": 1767.9391310343447,
+      "load_duration_s": 0.273257296,
+      "total_duration_s": 4.513236443
+    },
+    {
+      "prompt": "Explain how to transfer large datasets to a cluster using rsync, with examples.",
+      "repeat": 1,
+      "tokens_generated": 776,
+      "gen_tokens_per_s": 229.68790691536228,
+      "prefill_tokens_per_s": 4977.8366432567,
+      "load_duration_s": 0.278652669,
+      "total_duration_s": 4.175851412
+    },
+    {
+      "prompt": "Explain how to transfer large datasets to a cluster using rsync, with examples.",
+      "repeat": 2,
+      "tokens_generated": 605,
+      "gen_tokens_per_s": 229.04999441252414,
+      "prefill_tokens_per_s": 4865.5890047780085,
+      "load_duration_s": 0.308220527,
+      "total_duration_s": 3.284379785
+    }
+  ]
+}
