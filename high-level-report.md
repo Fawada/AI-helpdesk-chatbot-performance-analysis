@@ -149,7 +149,24 @@ modification.
 Note: single-request latency here (~1.9s) is lower than the sequential
 benchmark's ~3s, due to finer polling (0.1s vs 1s) and a fully warm model;
 the two figures should not be directly compared.
+## Concurrency on the GPU-fixed configuration
 
+The concurrency sweep was repeated after the GPU fix (inference on MI300A, ~227 tok/s), with the model warmed beforehand. GPU utilisation was monitored via `rocm-smi` during the run.
+
+| Concurrency (N) | Batch wall (s) | Min (s) | Median (s) | Max (s) | Throughput (req/min) | Failures |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1  | 2.30  | 2.30 | 2.30  | 2.30  | 26.0 | 0 |
+| 2  | 4.31  | 2.20 | 3.26  | 4.31  | 27.9 | 0 |
+| 5  | 8.91  | 1.81 | 5.91  | 8.91  | 33.7 | 0 |
+| 10 | 19.03 | 2.50 | 10.21 | 19.02 | 31.5 | 0 |
+
+**Key finding — the GPU fix did not materially change concurrent throughput (~30 req/min, same as the CPU-fallback run).** Raw token generation improved ~40× (see GPU Analysis), but end-to-end throughput under load is governed by the single-worker serial pipeline (retrieval, queue handling, `OLLAMA_NUM_PARALLEL=1`), not by generation speed.
+
+**GPU utilisation under concurrent load:** `rocm-smi` showed GPU0 sawtoothing between ~99% and 0% — bursts of generation separated by idle periods while the worker performs retrieval and claims the next request. GPUs 1-3 remained essentially unused (~1%). The MI300A is therefore **fixed but under-utilised** under concurrent demand.
+
+**Implication:** the concurrency bottleneck is worker serialisation, not GPU compute. Throughput headroom exists via (a) raising `OLLAMA_NUM_PARALLEL` to let one GPU serve multiple concurrent generations, and (b) running multiple workers across the three idle GPUs. This is the primary scalability optimisation for the service.
+
+Note: per-request latency is now much lower than the CPU-fallback run (e.g. N=1 warm ~2.3s vs generation alone taking ~15s on CPU for a long answer), so the GPU fix substantially improved *individual* response times even though aggregate concurrent throughput is unchanged.
 ## Evaluation framework and further work
 
 A RAG chatbot must be assessed along three independent dimensions — **system/GPU performance, retrieval quality, and answer quality**. A fast chatbot may still retrieve the wrong evidence or generate unsupported answers, so speed alone is not a sufficient assessment.
