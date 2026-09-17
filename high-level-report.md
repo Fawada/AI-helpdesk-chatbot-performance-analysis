@@ -179,6 +179,6 @@ A RAG chatbot must be assessed along three independent dimensions — **system/G
 
 *Answer quality* (requires reference answers and/or an LLM judge plus human review): correctness, faithfulness/groundedness, answer relevance, citation accuracy, hallucination rate, abstention on no-answer questions.
 
-*Extended system sweeps:* TTFT and TPOT; p50/p95/p99 latency (computable from existing per-query data); concurrency re-run on the GPU-fixed configuration at 1/2/4/8/16; model-size sweep (llama3.2:3b vs llama3.1:8b — both already available); quantisation and context-length sweeps; a latency–quality Pareto plot once quality metrics exist.
+*Extended system sweeps:* TTFT and TPOT; p50/p95/p99 latency (computable from existing per-query data); retrieval-vs-generation latency decomposition (to confirm where each request's time is spent); model-size sweep (llama3.2:3b vs llama3.1:8b — both already available); quantisation and context-length sweeps; a latency–quality Pareto plot once quality metrics exist. (The GPU-fixed concurrency re-run is now done — see "Concurrency on the GPU-fixed configuration".)
 
 *Prerequisite:* the retrieval and answer-quality work depends on building a labelled benchmark set (~100–300 representative questions with relevant chunks and reference answers). This is the natural next phase and the main outstanding effort.
