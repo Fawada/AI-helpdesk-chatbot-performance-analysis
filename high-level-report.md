@@ -42,7 +42,27 @@ precision, and context).
 Not applicable. This code performs no user-level floating-point compute on the CPU; its work is document retrieval plus LLM inference dispatched to the AMD MI300A. A scalar-peak FLOPS comparison would not characterise the workload. No CPU score is assigned.
 
 ## GPU Analysis
-Not measured in this high-level pass. The compute-intensive work (llama3.1:8b inference) runs on the MI300A APU. A meaningful GPU peak-performance-percentage would require profiling the Ollama runtime (e.g. `rocprofiler`/`rocm-smi`) on the worker, which is a deeper study than a high-level black-box glance. The MI300A's unified memory (no separate VRAM) also means the standard "benchmark exceeds GPU cache/VRAM" preparation step needs re-interpretation. Flagged as the primary candidate for follow-up if a deeper rubric is pursued. No GPU score assigned at this stage.
+## GPU Analysis (inference throughput on MI300A)
+
+**Primary finding: as deployed, the GPU was unused — inference silently fell back to CPU, running ~40× slower than the hardware allows.**
+
+The helpdesk's inference backend (Ollama) is intended to run llama3.1:8b on the node's MI300A GPU. In the as-deployed configuration, Ollama's GPU discovery failed ("failed to finish discovery before timeout" for all four devices) and it loaded the model on the CPU backend (`libggml-cpu-icelake.so`), with zero layers offloaded to GPU.
+
+Generation throughput was measured directly via Ollama's `/api/generate` endpoint (warm model, 5 representative prompts × 3 repeats), isolating inference from the queue/retrieval layer:
+
+| Condition | Generation (tok/s) | Prefill (tok/s) |
+| --- | --- | --- |
+| CPU fallback (as deployed) | ~5.7 median | ~122 median |
+| GPU (ROCm loaded) | ~227 median | ~4469 median |
+| **Improvement** | **~40×** | **~37×** |
+
+**Root cause:** Ollama is launched (`start-ollama.sh`) from a shell without the ROCm runtime available, so the GPU libraries were not on the library path; GPU discovery timed out and inference fell back to CPU. The MI300A accelerator — the reason for siting the service on this node — sat idle.
+
+**Fix (verified):** loading `module load hipcc/7.14-rocm-el9` before starting Ollama makes the MI300A GPU discoverable (`library=ROCm compute=gfx942`), fully offloads all 33/33 layers, and raises generation throughput from ~5.7 to ~227 tok/s. `start-ollama.sh` has been updated to load the module at startup.
+
+**Secondary observation:** even after the fix, inference uses only 1 of the node's 4 MI300A GPUs (`OLLAMA_NUM_PARALLEL=1`, single MainGPU). The 8B model fits comfortably on one GPU, so this is reasonable, but throughput headroom exists via `OLLAMA_NUM_PARALLEL` or multiple workers across the 4 GPUs (see Further work).
+
+**Scope note:** these figures characterise the *inference engine's* throughput on the MI300A, not GPU code written by the helpdesk (it has none — it dispatches inference to Ollama). tokens/s is used rather than a FLOP/s peak-percentage because it is the operative metric for LLM inference; a `rocprofiler`-based FLOP/s measurement is noted as further work.
 
 ## IO Analysis
 Relevant, and the most natural rubric for this architecture: the system is a shared-filesystem queue (requests, responses, token streams) plus index reads.
@@ -51,6 +71,7 @@ For a high-level first pass, end-to-end latency was measured from request submis
 
 IO score: not yet quantified (requires worker-side read/write timing). Preliminary observation: I/O does not appear to dominate runtime.
 
+Caveat: these latency figures predate the GPU fix (they were measured under CPU-fallback inference). With GPU inference (~40× faster generation), absolute latencies fall sharply and the I/O share of runtime warrants re-measurement.
 ## Intra-node Analysis
 Not applicable as specified. The workbook's intra-node rubric is a strong-scaling study over core counts on a fixed problem. This code exposes no such parallelism: the client is sequential and the worker is a single-process service; there is no thread/core sweep to perform. A conceptually analogous study would be **request concurrency** (multiple simultaneous users on the queue) measuring throughput, but that is a different metric from strong-scaling parallel efficiency and is noted as possible future work. No intra-node score assigned.
 
@@ -73,16 +94,16 @@ Measurement caveat: response-time granularity is ~1 s (client polls with
 `time.sleep(1)`); true per-query latencies are within ±1 s. Cold-start reflects
 model load into the MI300A on first query.
 
+Note: the latency and concurrency measurements in this report were taken with inference on CPU fallback (see GPU Analysis). With GPU inference restored, absolute per-query latencies are substantially lower; the qualitative findings (linear concurrency scaling, single-worker ceiling) are unaffected, but absolute figures would be revised downward on re-measurement.
 ## Summary
 
 These scores are indicative only and cannot be meaningfully compared across
-rubrics without domain knowledge. For a RAG helpdesk, most traditional HPC
-rubrics do not apply; the meaningful characterisation is end-to-end latency.
+rubrics without domain knowledge. For a RAG helpdesk, most traditional HPC rubrics do not apply; the meaningful characterisations are inference throughput, end-to-end latency, and service concurrency. The most significant finding is that the GPU was unused as deployed (inference fell back to CPU), resolved by a one-line ROCm environment fix for a ~40× throughput gain.
 
 | Result | Score | Metric result |
 | ---------------- | - | - |
 | CPU              | N/A | No user CPU FLOPS workload |
-| GPU              | Not measured | Candidate for follow-up (MI300A inference) |
+| GPU              | Major flaw found & fixed | CPU fallback → ROCm; ~40× (5.7→227 tok/s) |
 | IO               | Not quantified | I/O does not appear to dominate |
 | Intra-node (80%) | N/A | No core-scaling parallelism |
 | Inter-node (80%) | N/A | Single-node service |
@@ -128,3 +149,19 @@ modification.
 Note: single-request latency here (~1.9s) is lower than the sequential
 benchmark's ~3s, due to finer polling (0.1s vs 1s) and a fully warm model;
 the two figures should not be directly compared.
+
+## Evaluation framework and further work
+
+A RAG chatbot must be assessed along three independent dimensions — **system/GPU performance, retrieval quality, and answer quality**. A fast chatbot may still retrieve the wrong evidence or generate unsupported answers, so speed alone is not a sufficient assessment.
+
+**Assessed in this report (system/GPU performance):** generation throughput (tokens/s) and the CPU-fallback/ROCm-fix finding; end-to-end latency (cold vs warm); concurrency/throughput and single-worker saturation; GPU utilisation and offload; error/timeout rate (zero observed); full configuration record.
+
+**Further work — not yet assessed:**
+
+*Retrieval quality* (requires a labelled test set of questions → relevant chunks): Recall@k, Precision@k, Hit-rate@k, MRR, nDCG@k; context sufficiency; ablations of dense vs BM25 vs hybrid, chunk size, embedding model, and top-k (k = 3, 5, 10).
+
+*Answer quality* (requires reference answers and/or an LLM judge plus human review): correctness, faithfulness/groundedness, answer relevance, citation accuracy, hallucination rate, abstention on no-answer questions.
+
+*Extended system sweeps:* TTFT and TPOT; p50/p95/p99 latency (computable from existing per-query data); concurrency re-run on the GPU-fixed configuration at 1/2/4/8/16; model-size sweep (llama3.2:3b vs llama3.1:8b — both already available); quantisation and context-length sweeps; a latency–quality Pareto plot once quality metrics exist.
+
+*Prerequisite:* the retrieval and answer-quality work depends on building a labelled benchmark set (~100–300 representative questions with relevant chunks and reference answers). This is the natural next phase and the main outstanding effort.
