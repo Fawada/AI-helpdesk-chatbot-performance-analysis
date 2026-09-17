@@ -95,6 +95,21 @@ Measurement caveat: response-time granularity is ~1 s (client polls with
 model load into the MI300A on first query.
 
 Note: the latency and concurrency measurements in this report were taken with inference on CPU fallback (see GPU Analysis). With GPU inference restored, absolute per-query latencies are substantially lower; the qualitative findings (linear concurrency scaling, single-worker ceiling) are unaffected, but absolute figures would be revised downward on re-measurement.
+## Latency decomposition (retrieval vs generation)
+
+To locate where each request's time is spent, the worker was instrumented to record retrieval time and generation time separately (`t_retrieval_s`, `t_generation_s` in each response). Measured across the 15-query benchmark (warm, GPU inference):
+
+| Component | Typical time | Share |
+| --- | --- | --- |
+| Retrieval (hybrid BM25 + dense) | ~0.06 s | ~3% |
+| Generation (llama3.1:8b on MI300A) | ~1.9 s | ~97% |
+| Total (warm) | ~1.9–2.0 s | 100% |
+
+(The first query of a run is a cold-start outlier — total ~8.3s, with model load inflating generation and first-use index warming inflating retrieval — and is excluded from the steady-state figures.)
+
+**Finding:** each request is almost entirely generation; retrieval is negligible (~0.06s). This measurement replaces the earlier inference that "retrieval and serialisation" limit concurrency: retrieval is not a meaningful cost. The concurrency bottleneck is that the single worker performs **one generation at a time** (`OLLAMA_NUM_PARALLEL=1`), leaving the MI300A serving a single request while 3 of 4 GPUs sit idle.
+
+**Implication:** retrieval optimisation would yield almost nothing. The effective levers for concurrent throughput are (a) raising `OLLAMA_NUM_PARALLEL` so one GPU serves multiple concurrent generations, and (b) running multiple workers across the idle GPUs. This is consistent with the observed GPU utilisation sawtooth (brief idle gaps between generations because retrieval is fast).
 ## Summary
 
 These scores are indicative only and cannot be meaningfully compared across
