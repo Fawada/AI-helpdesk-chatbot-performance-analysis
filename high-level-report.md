@@ -41,7 +41,6 @@ precision, and context).
 ## CPU Analysis
 Not applicable. This code performs no user-level floating-point compute on the CPU; its work is document retrieval plus LLM inference dispatched to the AMD MI300A. A scalar-peak FLOPS comparison would not characterise the workload. No CPU score is assigned.
 
-## GPU Analysis
 ## GPU Analysis (inference throughput on MI300A)
 
 **Primary finding: as deployed, the GPU was unused — inference silently fell back to CPU, running ~40× slower than the hardware allows.**
