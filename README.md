@@ -1,7 +1,7 @@
 ---
 License: Copyright © 2026 Durham University, SHAREing Project, MIT Licensed
 Creator: Thomas Flynn
-Contributors: Thomas Flynn, Emily Wilkinson
+Contributors: Fawada Qaiser
 Summary: README file for the SHAREing assessment templates repository
 ---
 
